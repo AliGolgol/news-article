@@ -25,14 +25,20 @@ class ImageControllerTest {
     @Autowired
     private WebTestClient webClient;
 
-    ImageControllerTest() {
-    }
-
     @Test
     public void should_returnOkStatus_when_imageIsPersisted() {
         Image image = Image.builder().imageAuthor("alex").caption("AI article").price(1200).url("rul").build();
-        Mockito.when((Object)this.imageCommandService.save(image)).thenReturn((Object) Mono.just((Object)image));
-        ((WebTestClient.RequestBodySpec)this.webClient.post().uri("/upload/", new Object[0])).contentType(MediaType.APPLICATION_JSON).body((Publisher)Mono.just((Object)image), Image.class).exchange().expectStatus().isOk().expectBody(Image.class).value(employee1 -> image.getCaption(), Matchers.equalTo((Object)"AI article"));
+        Mockito.when(this.imageCommandService.save(image)).thenReturn(Mono.just(image));
+
+        webClient.post()
+                .uri("/upload/", new Object[0])
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(image), Image.class)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(Image.class)
+                .value(employee1 -> image.getCaption(), Matchers.equalTo("AI article"));
     }
 
 }

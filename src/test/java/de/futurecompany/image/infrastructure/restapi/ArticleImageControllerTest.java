@@ -20,8 +20,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-@ExtendWith(value={SpringExtension.class})
-@WebFluxTest(controllers={ArticleImageController.class})
+@ExtendWith(value = {SpringExtension.class})
+@WebFluxTest(controllers = {ArticleImageController.class})
 class ArticleImageControllerTest {
     @MockBean
     ArticleImageCommandService articleImageCommandService;
@@ -34,20 +34,24 @@ class ArticleImageControllerTest {
     @Autowired
     private WebTestClient webClient;
 
-    ArticleImageControllerTest() {
-    }
-
     @Test
     public void should_return_articleImage_when_imageIsAssignable() {
         String imageId = UUID.randomUUID().toString();
         String articleId = UUID.randomUUID().toString();
         ArticleImage articleImage = new ArticleImage(imageId, articleId);
         ArticleImageId articleImageId = new ArticleImageId(articleImage.getImageId(), articleImage.getArticleId());
-        Mockito.when((Object)this.articleImageCommandService.assignImage(articleImage)).thenReturn((Object) Mono.just((Object)articleImage.toString()));
+        Mockito.when(articleImageCommandService.assignImage(articleImage)).thenReturn(Mono.just(articleImage.toString()));
         Mockito.when(articleImageRepository.findById(articleImageId)).thenReturn(null);
         Mockito.when(articleImageRepository.save(articleImage)).thenReturn(articleImage);
-        Mockito.when((Object)this.imageNewsArticleRepository.findById(articleImage.getArticleId())).thenReturn(null);
-        ((WebTestClient.RequestBodySpec)this.webClient.post().uri("/assignImage/", new Object[0])).contentType(MediaType.APPLICATION_JSON).body((Publisher)Mono.just((Object)articleImage), ArticleImage.class).exchange().expectStatus().is5xxServerError();
+        Mockito.when(imageNewsArticleRepository.findById(articleImage.getArticleId())).thenReturn(null);
+
+        webClient.post()
+                .uri("/assignImage/", new Object[0])
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(articleImage), ArticleImage.class)
+                .exchange()
+                .expectStatus()
+                .is5xxServerError();
     }
 
 }
