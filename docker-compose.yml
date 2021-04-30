@@ -1,8 +1,8 @@
 version: "3"
 services:
-  springapp:
+  futureapp:
     build: .
-    container_name: springapp
+    container_name: futureapp
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/futuredb
     ports:
