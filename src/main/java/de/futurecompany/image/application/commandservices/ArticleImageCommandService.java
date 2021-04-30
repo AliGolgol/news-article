@@ -48,7 +48,7 @@ public class ArticleImageCommandService {
             ArticleImageId articleImageId = new ArticleImageId(articleImage.getImageId(), articleImage.getArticleId());
             Optional<ArticleImage> byId = articleImageRepository.findById(articleImageId);
             if (!byId.isEmpty()) {
-                throw new FutureBusinessException(HttpStatus.BAD_REQUEST, "Duplication may occurred!", null);
+                throw new FutureBusinessException(HttpStatus.BAD_REQUEST, "Duplication may occur!", null);
             }
             result = articleImageRepository.save(articleImage);
             publisher.publishEvent(new ImageAssignedEvent(
