@@ -23,7 +23,6 @@ public class GlobalErrorAttributes  extends DefaultErrorAttributes {
 
             return map;
         }
-//        map.put("status", HttpStatus.BAD_REQUEST);
         return map;
     }
 }
