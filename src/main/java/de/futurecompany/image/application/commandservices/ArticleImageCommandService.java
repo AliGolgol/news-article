@@ -4,6 +4,7 @@ import de.futurecompany.image.domain.ArticleImage;
 import de.futurecompany.image.domain.ArticleImageId;
 import de.futurecompany.image.domain.Image;
 import de.futurecompany.image.domain.ImageNewsArticle;
+import de.futurecompany.errorhandling.FutureBusinessException;
 import de.futurecompany.image.infrastructure.repository.ArticleImageRepository;
 import de.futurecompany.image.infrastructure.repository.ImageNewsArticleRepository;
 import de.futurecompany.image.infrastructure.repository.ImageRepository;
@@ -11,13 +12,13 @@ import de.futurecompany.sharedDomain.event.ImageAssignedEvent;
 import de.futurecompany.sharedDomain.event.ImageAssignedEventData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
 @Service
-//@RequiredArgsConstructor
 public class ArticleImageCommandService {
 
     @Autowired
@@ -31,36 +32,34 @@ public class ArticleImageCommandService {
 
     /**
      * Assign an image to an article
+     *
      * @param articleImage is a {@link ArticleImage}
      * @return a {@link Mono<String>}
      */
     public Mono<String> assignImage(ArticleImage articleImage) {
+        ArticleImage result;
         Optional<ImageNewsArticle> imageNewsArticle = imageNewsArticleRepository.findById(articleImage.getArticleId());
+
         if (!imageNewsArticle.isPresent()) {
-            System.out.println("There is not such this article!");
-            return Mono.empty();
-        }
+            throw new FutureBusinessException(HttpStatus.BAD_REQUEST, "There is not such this article!", null);
+        } else {
 
-        Optional<Image> image = imageRepository.findById(articleImage.getImageId());
-        ArticleImageId articleImageId = new ArticleImageId(articleImage.getImageId(), articleImage.getArticleId());
-        Optional<ArticleImage> byId = articleImageRepository.findById(articleImageId);
-        try {
-            if (byId.isEmpty()) {
-                throw new RuntimeException("This assign is not acceptable!");
+            Optional<Image> image = imageRepository.findById(articleImage.getImageId());
+            ArticleImageId articleImageId = new ArticleImageId(articleImage.getImageId(), articleImage.getArticleId());
+            Optional<ArticleImage> byId = articleImageRepository.findById(articleImageId);
+            if (!byId.isEmpty()) {
+                throw new FutureBusinessException(HttpStatus.BAD_REQUEST, "Duplication may occurred!", null);
             }
-        } catch (Exception e) {
-            throw e;
+            result = articleImageRepository.save(articleImage);
+            publisher.publishEvent(new ImageAssignedEvent(
+                    ImageAssignedEventData.builder()
+                            .imageUrl(image.get().getUrl())
+                            .articleId(articleImage.getArticleId())
+                            .Author(image.get().getImageAuthor())
+                            .price(image.get().getPrice()).build()
+            ));
+
+            return Mono.justOrEmpty(result.toString());
         }
-
-        ArticleImage result = articleImageRepository.save(articleImage);
-        publisher.publishEvent(new ImageAssignedEvent(
-                ImageAssignedEventData.builder()
-                        .imageUrl(image.get().getUrl())
-                        .articleId(articleImage.getArticleId())
-                        .Author(image.get().getImageAuthor())
-                        .price(image.get().getPrice()).build()
-        ));
-
-        return Mono.justOrEmpty(result.toString());
     }
 }

@@ -15,17 +15,18 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
 @Service
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class PublishingNewsArticleCommandService {
 
     @Autowired
     private PublishingNewsArticleRepository publishingNewsArticleRepository;
     @Autowired
-    private final ApplicationEventPublisher eventPublisher;
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * Subscribe to {@link NewsArticleCreatedEventData} which is published by NewsArticle component to persist it
@@ -48,16 +49,16 @@ public class PublishingNewsArticleCommandService {
      * @return a {@link Mono<PublishingView>}
      */
     public Mono<PublishingView> publish(String id) {
-        PublishingArticle publishingArticle = publishingNewsArticleRepository.findById(id).get();
-        if (publishingArticle == null) {
+        Optional<PublishingArticle> publishingArticle = publishingNewsArticleRepository.findById(id);
+        if (!publishingArticle.isPresent()) {
             try {
                 throw new NotFoundException("The article not found");
             } catch (NotFoundException e) {
                 e.printStackTrace();
             }
         }
-        publishingArticle.setPublished(true);
-        PublishingArticle save = publishingNewsArticleRepository.save(publishingArticle);
+        publishingArticle.get().setPublished(true);
+        PublishingArticle save = publishingNewsArticleRepository.save(publishingArticle.get());
 
         eventPublisher.publishEvent(new ArticlePublishedEvent(ArticlePublishedEventData.builder()
         .articleId(save.getArticleId()).build()));

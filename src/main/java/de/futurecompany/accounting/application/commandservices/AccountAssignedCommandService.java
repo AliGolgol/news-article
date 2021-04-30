@@ -11,6 +11,7 @@ import java.util.Optional;
 
 @Service
 public class AccountAssignedCommandService {
+
     @Autowired
     AccountRepository repository;
 
@@ -22,10 +23,10 @@ public class AccountAssignedCommandService {
         Gson gson = new Gson();
         try {
             Account account = gson.fromJson(gson.toJson(eventData), Account.class);
-            Optional<Account> query = repository.findById(eventData.getImageUrl());
-            if (!query.isEmpty()  ){
-                return;
-            }
+//            Optional<Account> query = repository.findById(eventData.getImageUrl());
+//            if (!query.isEmpty()  ){
+//                return;
+//            }
             repository.save(account);
         } catch (Exception e) {
             e.getStackTrace();
